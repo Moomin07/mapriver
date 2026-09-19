@@ -1,0 +1,1502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>J&K HYDROLOGICAL SURVEY & FIELD RECONNAISSANCE SYSTEM [JKPSC/JKSSB ED.]</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        :root {
+            --win-bg: #d4d0c8;
+            --win-high: #ffffff;
+            --win-shadow: #808080;
+            --win-darkshadow: #404040;
+            --parchment: #f2efe4;
+            --panel-bg: #e8e4d8;
+            --ink-black: #111111;
+            --military-olive: #3f4531;
+            --military-dark: #2a2e21;
+            --exam-gold: #b8860b;
+        }
+        body {
+            font-family: 'Courier New', Courier, monospace, 'Lucida Console';
+            background-color: var(--win-bg);
+            color: var(--ink-black);
+            line-height: 1.45;
+            font-size: 13px;
+            overflow: hidden;
+            user-select: text;
+        }
+        .titlebar {
+            background: linear-gradient(90deg, #000080, #1084d0);
+            color: #ffffff;
+            padding: 3px 6px;
+            font-weight: bold;
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--win-darkshadow);
+        }
+        .header-panel {
+            background-color: var(--panel-bg);
+            border-top: 2px solid var(--win-high);
+            border-left: 2px solid var(--win-high);
+            border-right: 2px solid var(--win-darkshadow);
+            border-bottom: 2px solid var(--win-darkshadow);
+            margin: 4px;
+            padding: 8px 12px;
+        }
+        .header-panel h1 {
+            font-size: 17px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--military-dark);
+            border-bottom: 1px dashed var(--military-olive);
+            padding-bottom: 3px;
+        }
+        .header-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            margin-top: 4px;
+            color: #333333;
+        }
+        .workbench {
+            display: flex;
+            height: calc(100vh - 110px);
+            margin: 0 4px;
+            gap: 4px;
+        }
+        .sidebar-frame {
+            width: 320px;
+            background-color: var(--panel-bg);
+            border-top: 2px solid var(--win-high);
+            border-left: 2px solid var(--win-high);
+            border-right: 2px solid var(--win-darkshadow);
+            border-bottom: 2px solid var(--win-darkshadow);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+        .pane-header {
+            background-color: var(--military-olive);
+            color: #ffffff;
+            padding: 4px 8px;
+            font-size: 12px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            border-bottom: 2px solid var(--ink-black);
+            display: flex;
+            justify-content: space-between;
+        }
+        .sidebar-content {
+            overflow-y: scroll;
+            flex: 1;
+            padding: 4px;
+            background: #ffffff;
+            border: 2px inset var(--win-shadow);
+            margin: 4px;
+        }
+        .folder-group {
+            margin-bottom: 6px;
+            border: 1px solid #ccc;
+        }
+        .folder-header {
+            background: #e0ded4;
+            padding: 4px 6px;
+            font-weight: bold;
+            cursor: pointer;
+            border-bottom: 1px solid #b8b4a8;
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .folder-header:hover {
+            background: #d4cfbe;
+        }
+        .folder-list {
+            list-style: none;
+        }
+        .tree-node {
+            padding: 4px 8px 4px 16px;
+            cursor: pointer;
+            font-size: 12px;
+            border-bottom: 1px dotted #e0e0e0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .tree-node:hover {
+            background-color: #dcd7c9;
+            color: #000;
+        }
+        .tree-node.active {
+            background-color: #000080 !important;
+            color: #ffffff !important;
+            font-weight: bold;
+        }
+        .viewport-frame {
+            flex: 1;
+            background-color: var(--panel-bg);
+            border-top: 2px solid var(--win-high);
+            border-left: 2px solid var(--win-high);
+            border-right: 2px solid var(--win-darkshadow);
+            border-bottom: 2px solid var(--win-darkshadow);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .map-wrapper {
+            background: #e4dfd0;
+            border-bottom: 2px solid #555544;
+            padding: 4px;
+            height: 35vh;
+            min-height: 250px;
+            display: flex;
+            flex-direction: column;
+        }
+        .carto-titlebar {
+            background: var(--military-dark);
+            color: #f0f0e0;
+            padding: 3px 8px;
+            font-size: 11px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+        #map {
+            flex: 1;
+            border: 2px inset var(--win-shadow);
+            background: #eef2eb;
+            width: 100%;
+        }
+        .content-scrollbox {
+            flex: 1;
+            overflow-y: auto;
+            background-color: var(--parchment);
+            padding: 16px 20px;
+        }
+        .exam-memo-box {
+            background: #fffcee;
+            border: 2px solid var(--exam-gold);
+            padding: 10px 14px;
+            margin: 14px 0;
+            position: relative;
+        }
+        .exam-memo-box::before {
+            content: "⚡ JKPSC KAS / JKSSB HIGH-PRIORITY EXAM RECORD";
+            display: block;
+            background: var(--exam-gold);
+            color: #000;
+            font-weight: bold;
+            font-size: 10px;
+            padding: 2px 6px;
+            margin: -10px -14px 8px -14px;
+            border-bottom: 1px solid #000;
+        }
+        .iwt-memo-box {
+            background: #f0f6fc;
+            border: 2px solid #1f5080;
+            padding: 10px 14px;
+            margin: 14px 0;
+        }
+        .iwt-memo-box::before {
+            content: "⚖️ INDUS WATERS TREATY (1960) & ARBITRATION REGIME";
+            display: block;
+            background: #1f5080;
+            color: #fff;
+            font-weight: bold;
+            font-size: 10px;
+            padding: 2px 6px;
+            margin: -10px -14px 8px -14px;
+        }
+        table.retro-tbl {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0;
+            font-size: 12px;
+            background: #ffffff;
+            border: 1px solid var(--ink-black);
+        }
+        table.retro-tbl th {
+            background-color: var(--military-olive);
+            color: #ffffff;
+            text-align: left;
+            padding: 6px 8px;
+            font-weight: bold;
+            border: 1px solid var(--ink-black);
+            text-transform: uppercase;
+            font-size: 11px;
+        }
+        table.retro-tbl td {
+            padding: 5px 8px;
+            border: 1px solid #888877;
+            vertical-align: top;
+        }
+        table.retro-tbl tr:nth-child(even) {
+            background-color: #f7f5ed;
+        }
+        .info-header {
+            font-size: 19px;
+            font-weight: bold;
+            color: #111;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #222;
+            padding-bottom: 4px;
+        }
+        .sub-header {
+            font-size: 13px;
+            font-weight: bold;
+            color: var(--military-olive);
+            margin: 14px 0 6px 0;
+            text-transform: uppercase;
+            border-left: 5px solid var(--military-olive);
+            padding-left: 6px;
+        }
+        ul.exam-points {
+            margin-left: 18px;
+            margin-bottom: 12px;
+        }
+        ul.exam-points li {
+            margin-bottom: 5px;
+            line-height: 1.4;
+        }
+        .badge {
+            display: inline-block;
+            padding: 1px 5px;
+            font-size: 10px;
+            font-weight: bold;
+            border: 1px solid #333;
+            margin-right: 4px;
+        }
+        .badge-river { background: #b8d0eb; color: #0c2d48; }
+        .badge-lake { background: #bfe5d9; color: #0d3b2e; }
+        .badge-dam { background: #ebd1b8; color: #4a2700; }
+        .hud-statusbar {
+            background-color: #d4d0c8;
+            border-top: 2px solid var(--win-shadow);
+            padding: 4px 10px;
+            font-size: 11px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+        }
+        .nav-btn {
+            background: #e0ded4;
+            border-top: 2px solid #ffffff;
+            border-left: 2px solid #ffffff;
+            border-right: 2px solid #404040;
+            border-bottom: 2px solid #404040;
+            padding: 3px 10px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        .nav-btn:active {
+            border-top: 2px solid #404040;
+            border-left: 2px solid #404040;
+            border-right: 2px solid #ffffff;
+            border-bottom: 2px solid #ffffff;
+            background: #ccc7b8;
+        }
+        .kbd-pill {
+            background: #111;
+            color: #00ff66;
+            padding: 1px 5px;
+            font-family: monospace;
+            border: 1px solid #666;
+            margin: 0 2px;
+        }
+        ::-webkit-scrollbar { width: 14px; height: 14px; }
+        ::-webkit-scrollbar-track { background: #dcd8cc; border: 1px solid #808080; }
+        ::-webkit-scrollbar-thumb { background: #aba79a; border: 1px outset #ffffff; }
+        ::-webkit-scrollbar-thumb:active { background: #7a766a; }
+        @media (max-width: 768px) {
+            .workbench {
+                flex-direction: column;
+                height: calc(100vh - 80px);
+                overflow-y: auto;
+            }
+            body {
+                overflow-y: auto;
+            }
+            .sidebar-frame {
+                width: 100%;
+                height: 250px;
+                flex-shrink: 0;
+            }
+            .viewport-frame {
+                overflow: visible;
+            }
+            .map-wrapper {
+                height: 300px;
+            }
+            .header-meta {
+                flex-direction: column;
+                gap: 4px;
+            }
+            .hud-statusbar {
+                flex-direction: column;
+                text-align: center;
+                gap: 8px;
+                padding: 10px;
+            }
+            .nav-btn {
+                margin: 4px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="titlebar">
+        <span>JK_HYDRO_GIS_CATALOG.EXE [FIELD SURVEY COMPENDIUM 1998]</span>
+        <span>VERSION 6.0 - LEAFLET VECTOR HIGHLIGHT ENGINE</span>
+    </div>
+    <div class="header-panel">
+        <h1>J&amp;K Drainage Systems, Lacustrine Basins &amp; Hydro-Power Projects by MOOMIN GULZAR</h1>
+        <div class="header-meta">
+            <span>OFFICIAL SYLLABUS REFERENCE: GEOGRAPHY OF J&amp;K (UT OF J&amp;K / UT OF LADAKH)</span>
+            <span>TOTAL SURVEY STATIONS: 37 ENTITIES</span>
+            <span style="display:none;" id="kbd-hint">COMMAND: PRESS <span class="kbd-pill">Ctrl + &rarr;</span> NEXT &nbsp;|&nbsp; <span class="kbd-pill">Ctrl + &larr;</span> PREVIOUS</span>
+        </div>
+    </div>
+    <div class="workbench">
+        <div class="sidebar-frame">
+            <div class="pane-header">
+                <span>INDEX DIRECTORY</span>
+                <span id="index-counter">[1/37]</span>
+            </div>
+            <div class="sidebar-content" id="sidebar-list">
+            </div>
+        </div>
+        <div class="viewport-frame">
+            <div class="pane-header">
+                <span id="active-entity-title">FIELD DATA TERMINAL - BOOTING...</span>
+                <span id="active-entity-coords">COORD: LAT --°--'N | LON --°--'E</span>
+            </div>
+            <div class="map-wrapper">
+                <div class="carto-titlebar">
+                    <span>LIVE SATELLITE/TOPOGRAPHIC FEED - VECTOR HIGHLIGHT VIEW</span>
+                    <span>LINK ESTABLISHED: ACTIVE ROUTING</span>
+                </div>
+                <div id="map"></div>
+            </div>
+            <div class="content-scrollbox" id="content-display">
+            </div>
+        </div>
+    </div>
+    <div class="hud-statusbar">
+        <div>
+            NAVIGATION: 
+            <button class="nav-btn" onclick="stepItem(-1)">&lt; PREV [Ctrl+&larr;]</button>
+            <button class="nav-btn" onclick="stepItem(1)">NEXT [Ctrl+&rarr;] &gt;</button>
+            <span style="margin-left:12px; color:#555;" id="quick-status-msg">READY.</span>
+        </div>
+        <div>
+            EXAM ADVISORY: <span style="color:#8b0000;">VERIFY HISTORICAL NOMENCLATURE PRECISELY</span>
+        </div>
+    </div>
+
+    <script>
+        const WATER_DATABASE = [
+            {
+                id: "jhelum",
+                type: "river",
+                category: "RIVERS",
+                name: "Jhelum River",
+                vernacular: "Vyeth (Kashmiri), Vitasta (Rigveda/Sanskrit), Hydaspes (Ancient Greek)",
+                coords: { lat: 34.08, lon: 74.80 },
+                path: [
+                    [33.53, 75.25], [33.65, 75.18], [33.73, 75.15], [33.88, 74.98], 
+                    [34.01, 74.85], [34.08, 74.80], [34.18, 74.65], [34.35, 74.55], 
+                    [34.28, 74.45], [34.20, 74.34], [34.14, 74.05], [34.11, 73.85]
+                ],
+                elevation: "1,876 m at Verinag source",
+                length: "725 km total (approx 177 km in Kashmir Valley from Verinag to Uri/Baramulla)",
+                origin: "Verinag Spring (Pir Panjal foot, District Anantnag)",
+                confluence: "Merges with Chenab at Trimmu (Pakistan) after traversing PoK and Punjab plains",
+                districts: "Anantnag, Pulwama, Srinagar, Budgam, Ganderbal, Bandipora, Baramulla",
+                iwtStatus: "Western River (Indus Basin) under Indus Waters Treaty 1960. Assigned to Pakistan for unrestricted use, but India is explicitly permitted run-of-the-river hydroelectric exploitation without storage/diversion outside basin.",
+                tributariesLeft: "Vishav (at Sangam), Rambiara (at Sangam), Bringi, Sandran, Lidder (near Khanabal/Mirgund), Doodhganga (at Chhatabal/Srinagar), Sukhnag",
+                tributariesRight: "Sindh River (at Shadipora / Narayan Bagh 'Prayag of Kashmir'), Pohru River (at Doabgah/Sopore), Erin River, Madhumati River",
+                kasPoints: [
+                    "Ancient Greeks under Alexander recorded it as 'Hydaspes' during the Battle of the Hydaspes (326 BCE against King Porus).",
+                    "Kalhana's Rajatarangini chronicles the great flood prevention dredging engineered by 'Suyya' (minister under King Avantivarman, 9th century CE), shifting its confluence and reclaiming farmland (Suyyapur = modern Sopore).",
+                    "Traverses Wular Lake (enters near Bandipora, exits at Sopore) which acts as its natural flood retention cushion.",
+                    "Flows through Baramulla gorge cutting through the Pir Panjal range before crossing the Line of Control into Muzaffarabad."
+                ],
+                geographyNote: "The valley floor gradient is remarkably gentle (approx 10 cm per km between Khanabal and Baramulla), causing it to meander intensely. Its oxbow formations and flood spill channels are pivotal JKSSB physical geography questions."
+            },
+            {
+                id: "sindh",
+                type: "river",
+                category: "RIVERS",
+                name: "Sindh River (Sindh Nallah)",
+                vernacular: "Sindhu / Harmukh Ganga Tributary",
+                coords: { lat: 34.28, lon: 74.83 },
+                path: [
+                    [34.28, 75.45], [34.29, 75.35], [34.30, 75.29], [34.26, 75.10],
+                    [34.26, 74.90], [34.22, 74.75], [34.18, 74.67]
+                ],
+                elevation: "4,200 m at Machoi / Panjtarni glaciers",
+                length: "Approx 108 km",
+                origin: "Machoi Glacier near Zoji La Pass & Harmukh Mountain ridges (District Ganderbal)",
+                confluence: "Right-bank confluence with Jhelum at Shadipora (Ganderbal), marked by a holy Chinar tree on an island known as the 'Prayag of Kashmir'.",
+                districts: "Ganderbal (carves out the entire Sindh Valley / Sonamarg)",
+                iwtStatus: "Western River sub-tributary. Exploited for run-of-the-river generation (Upper Sindh-I, Upper Sindh-II, Ganderbal HEP).",
+                tributariesLeft: "Wangath Nallah (draining Gangabal Lake), Shitkari Nallah",
+                tributariesRight: "Amarnath glacial stream, Kolahoi northern runoff",
+                kasPoints: [
+                    "Second most critical tributary of Jhelum in terms of volumetric discharge.",
+                    "Provides irrigation water to the Sind Valley irrigation canal and drinking water to large parts of Srinagar city via Rangil Water Treatment Plant.",
+                    "Hosts Upper Sindh Hydroelectric Project Stage-I (Sumbal, 22.6 MW) and Stage-II (Kangan, 105 MW), and the historic Ganderbal HEP (15 MW, commissioned 1955).",
+                    "Acts as the physical corridor for National Highway 1D (Srinagar-Leh Highway) leading up to Zoji La Pass."
+                ],
+                geographyNote: "Pristine, cold stenothermal mountain waters renowned as the premier Brown Trout (Salmo trutta fario) and Rainbow Trout fly-fishing river in northern India."
+            },
+            {
+                id: "lidder",
+                type: "river",
+                category: "RIVERS",
+                name: "Lidder River",
+                vernacular: "Lambodari (Ancient Sanskrit chronicle name)",
+                coords: { lat: 33.74, lon: 75.15 },
+                path: [
+                    [34.15, 75.32], [34.08, 75.35], [34.01, 75.31], [33.90, 75.25], [33.79, 75.10]
+                ],
+                elevation: "4,650 m at Kolahoi Glacier",
+                length: "73 km",
+                origin: "Confluence of East Lidder (from Sheshnag Lake) and West Lidder (from Kolahoi Glacier) at Pahalgam",
+                confluence: "Left-bank confluence with River Jhelum at Gur near Mirgund / Khanabal (Anantnag)",
+                districts: "Anantnag",
+                iwtStatus: "Western River Basin tributary.",
+                tributariesLeft: "Sheshnag stream, West Lidder",
+                tributariesRight: "Aru stream, Kolahoi glacial melt streams",
+                kasPoints: [
+                    "West Lidder originates from Kashmir's hanging glacier: the Kolahoi (Goddess of Light) glacier.",
+                    "East Lidder passes through Chandanwari and joins West Lidder in the iconic tourist bowl of Pahalgam.",
+                    "Feeds the historic Martand Canal (constructed by King Lalitaditya Muktapida in the 8th century CE) irrigating the Mattan and Martand plateaus (Karewas).",
+                    "Vital aquatic resource powering the state fisheries trout hatcheries at Achabal and Laripora."
+                ],
+                geographyNote: "Carves the U-shaped glacial valley of Betaab Valley and Aru. Its upper course is bounded by dense sub-alpine deodar and birch stands."
+            },
+            {
+                id: "pohru",
+                type: "river",
+                category: "RIVERS",
+                name: "Pohru River",
+                vernacular: "Pohur / Lolab-Kahmil drainage",
+                coords: { lat: 34.33, lon: 74.45 },
+                path: [
+                    [34.52, 74.25], [34.45, 74.27], [34.40, 74.28], [34.35, 74.35], [34.28, 74.45]
+                ],
+                elevation: "3,200 m in Shamsabari / Lolab hills",
+                length: "Approx 55 km",
+                origin: "Formed by the union of the Kahmil, Talri, and Lolab streams in the Kupwara/Lolab bowl",
+                confluence: "Right-bank confluence with River Jhelum at Doabgah, downstream of Sopore (Baramulla)",
+                districts: "Kupwara, Baramulla",
+                iwtStatus: "Western River Basin tributary.",
+                tributariesLeft: "Mawar Nallah, Tirkayan Nallah",
+                tributariesRight: "Lolab stream, Kahmil Nallah",
+                kasPoints: [
+                    "Acts as the chief drainage artery of Kupwara and Lolab valleys.",
+                    "Carries extreme quantities of silt derived from the soft lacustrine Karewa deposits of the Handwara-Kupwara plateau.",
+                    "Historical site of log-driving (timber transportation) during Dogra and British forestry exploitation regimes.",
+                    "Frequently causes localized backwater surges and flash floods in Sopore orchards during monsoon cloudbursts."
+                ],
+                geographyNote: "The soil catchment is heavily dominated by apple and walnut orchards; severe bank erosion along its lower meanders remains an environmental focus."
+            },
+            {
+                id: "bringi",
+                type: "river",
+                category: "RIVERS",
+                name: "Bringi River (Brengi)",
+                vernacular: "Breng Nallah",
+                coords: { lat: 33.58, lon: 75.25 },
+                path: [
+                    [33.56, 75.43], [33.57, 75.35], [33.58, 75.30], [33.62, 75.22], [33.73, 75.15]
+                ],
+                elevation: "3,600 m near Sinthan Pass",
+                length: "Approx 40 km",
+                origin: "Pir Panjal mountain slopes near Sinthan Top (border of Anantnag and Kishtwar)",
+                confluence: "Unites with the Sandran and Arapath streams near Khanabal/Anantnag to form the trunk stream of River Jhelum",
+                districts: "Anantnag",
+                iwtStatus: "Western River Basin tributary.",
+                tributariesLeft: "Kokernag spring overflows",
+                tributariesRight: "Ahlan Gadol streams, Vailoo streams",
+                kasPoints: [
+                    "Major constituent tributary of the Upper Jhelum system.",
+                    "Famous for karst limestone sinkholes: In February 2022, a massive sinkhole opened in the Bringi riverbed at Dewethpora (Kokernag), completely swallowing the entire river flow for weeks.",
+                    "Passes through the Breng valley, serving the sub-districts of Kokernag and Dialgam.",
+                    "Supplies vital agricultural water for high-altitude indigenous varieties of aromatic rice (Mushqbudji)."
+                ],
+                geographyNote: "Characterized by underground subterranean drainage channels typical of mature karst topography in southern Kashmir."
+            },
+            {
+                id: "vishav",
+                type: "river",
+                category: "RIVERS",
+                name: "Vishav River (Veshaw)",
+                vernacular: "Vishoka (Nilamata Purana & Rajatarangini)",
+                coords: { lat: 33.65, lon: 75.05 },
+                path: [
+                    [33.51, 74.82], [33.58, 74.75], [33.64, 74.78], [33.75, 74.92], [33.82, 75.07]
+                ],
+                elevation: "3,960 m at Kousarnag Lake",
+                length: "Approx 58 km",
+                origin: "Kousarnag (Konsarnag) high-altitude glacial lake in the Pir Panjal Range",
+                confluence: "Left-bank confluence with Jhelum at Sangam (Anantnag/Pulwama boundary)",
+                districts: "Kulgam, Anantnag",
+                iwtStatus: "Western River Basin tributary.",
+                tributariesLeft: "Chittanaddi, Kandai Nallah",
+                tributariesRight: "Samran stream, Kulgam agricultural runoff",
+                kasPoints: [
+                    "Forms the world-famous Aharbal Waterfall (approx 25 m drop), widely dubbed the 'Niagara Falls of Kashmir'.",
+                    "Renowned for violent, rapid flood discharge owing to the steep descent from the Pir Panjal crest.",
+                    "Its confluence with Rambiara near Sangam creates the massive silt plain responsible for rich saffron and paddy soils.",
+                    "Nilamata Purana identifies it as 'Vishoka' meaning 'free from sorrow'."
+                ],
+                geographyNote: "Critical supplier of the Noorabad and Kulgam irrigation canal grids; notorious for carrying giant boulders and gravel during cloudbursts."
+            },
+            {
+                id: "rembiara",
+                type: "river",
+                category: "RIVERS",
+                name: "Rambiara River (Rembiara)",
+                vernacular: "Ramanyatavi (Rajatarangini)",
+                coords: { lat: 33.78, lon: 74.98 },
+                path: [
+                    [33.63, 74.52], [33.68, 74.65], [33.72, 74.83], [33.78, 74.98], [33.82, 75.07]
+                ],
+                elevation: "3,800 m near Pir Ki Gali",
+                length: "Approx 52 km",
+                origin: "Pir Panjal crest near Pir Ki Gali and Rupri ridge",
+                confluence: "Unites with Vishav River just before emptying into Jhelum at Sangam",
+                districts: "Shopian, Pulwama",
+                iwtStatus: "Western River Basin tributary.",
+                tributariesLeft: "Hirpora sanctuary streams",
+                tributariesRight: "Keller nallahs, Dubjan cold springs",
+                kasPoints: [
+                    "Parallels the historic Mughal Road (Bafliaz-Shopian axis) through the Hirpora Wildlife Sanctuary.",
+                    "Noted for a wide, braided, dry stony bed in summer that turns into a raging torrent in monsoonal downpours.",
+                    "Plays a pivotal role in irrigating the Shopian Karewas ('Apple Bowl of Kashmir').",
+                    "Suffers extensive unscientific riverbed boulder and gravel mining, frequently highlighted in National Green Tribunal (NGT) litigations."
+                ],
+                geographyNote: "Flows through high alluvial bluffs; subject to dramatic snow-melt variations between May and July."
+            },
+            {
+                id: "arapal",
+                type: "river",
+                category: "RIVERS",
+                name: "Arapal River (Arapath)",
+                vernacular: "Harwan / Tral drainage network",
+                coords: { lat: 33.88, lon: 75.05 },
+                path: [
+                    [33.93, 75.11], [33.90, 75.08], [33.92, 75.01]
+                ],
+                elevation: "2,900 m in Shikargah-Tral forests",
+                length: "Approx 32 km",
+                origin: "Pastoral ridges of Nagaberan and Shikargah (District Pulwama/Tral)",
+                confluence: "Right-bank confluence with Jhelum near Awantipora (Pulwama)",
+                districts: "Pulwama",
+                iwtStatus: "Western River Basin tributary.",
+                tributariesLeft: "Tral valley springs",
+                tributariesRight: "Pastuna streams, Shikargah catchment runoff",
+                kasPoints: [
+                    "Flanks the historic archaeological capital of King Avantivarman (Awantipora temple complex: Avantiswami and Avantisvara temples).",
+                    "Provides irrigation water to the famous Pampore saffron plateau (Karewas) peripheral areas.",
+                    "Upper catchment is the natural corridor of the endangered Hangul (Kashmir Stag, Cervus hanglu hanglu) between Shikargah and Dachigam.",
+                    "Frequent JKSSB question regarding rivers in southern Kashmir providing gravity irrigation canals."
+                ],
+                geographyNote: "A spring-cum-snowmelt stream with relatively placid flow except during intense pre-monsoon convective thunderstorms."
+            },
+            {
+                id: "sandran",
+                type: "river",
+                category: "RIVERS",
+                name: "Sandran River",
+                vernacular: "Chandravati (Nilamata Purana)",
+                coords: { lat: 33.60, lon: 75.18 },
+                path: [
+                    [33.55, 75.20], [33.57, 75.23], [33.65, 75.18], [33.73, 75.15]
+                ],
+                elevation: "3,300 m near Jawahar Tunnel / Banihal ridge",
+                length: "Approx 38 km",
+                origin: "Pir Panjal crest near Jawahar Tunnel and Lower Munda (District Anantnag)",
+                confluence: "Merges with Bringi and Arapath near Sadura / Khanabal to feed trunk Jhelum",
+                districts: "Anantnag",
+                iwtStatus: "Western River Basin tributary.",
+                tributariesLeft: "Kapran spring tributaries",
+                tributariesRight: "Verinag bypass runoff streams",
+                kasPoints: [
+                    "Parallels the traditional Jammu-Srinagar National Highway (NH-44) descent from Banihal Tunnel down to Qazigund.",
+                    "Historically noted in the Nilamata Purana as 'Chandravati'.",
+                    "Drains the southern-most boundary pocket of the Kashmir Valley floor.",
+                    "Provides vital water to Qazigund and Doru-Shahabad agricultural belts."
+                ],
+                geographyNote: "Heavily tapped by traditional community earthen canals ('Kuhls') dating back several centuries."
+            },
+            {
+                id: "doodganga",
+                type: "river",
+                category: "RIVERS",
+                name: "Doodganga River",
+                vernacular: "Dugdha-Ganga ('River of Milk')",
+                coords: { lat: 34.02, lon: 74.78 },
+                path: [
+                    [33.75, 74.55], [33.85, 74.65], [33.95, 74.80], [34.05, 74.79], [34.08, 74.79]
+                ],
+                elevation: "3,700 m near Tatakooti peak",
+                length: "Approx 45 km",
+                origin: "Tatakooti Peak and Sang-e-Safed meadow in the Pir Panjal Range",
+                confluence: "Left-bank confluence into Jhelum near Chhatabal weir / Safa Kadal (Srinagar)",
+                districts: "Budgam, Srinagar",
+                iwtStatus: "Western River Basin tributary.",
+                tributariesLeft: "Shali Ganga (joins near Chadoora)",
+                tributariesRight: "Yusmarg alpine melt streams",
+                kasPoints: [
+                    "Receives its name from the frothy, white milky appearance caused by tumbling over steep quartzite and limestone cascades.",
+                    "Flows past the famous tourist meadow of Yusmarg and Chadoora town.",
+                    "Primary source of potable water supply for South Srinagar through the Doodhganga Water Treatment Plant at Kralpora.",
+                    "Subject of prominent National Green Tribunal (NGT) environmental rulings regarding illegal mechanized mining and untreated municipal sewage discharge."
+                ],
+                geographyNote: "Its lower urban segment enters the Srinagar municipal drainage basin, merging close to the old floodgates of the city."
+            },
+            {
+                id: "erin",
+                type: "river",
+                category: "RIVERS",
+                name: "Erin River (Erin Nallah)",
+                vernacular: "Harmukh Northern Drainage",
+                coords: { lat: 34.42, lon: 74.68 },
+                path: [
+                    [34.40, 74.95], [34.41, 74.80], [34.42, 74.65]
+                ],
+                elevation: "3,800 m in Harmukh Range",
+                length: "Approx 30 km",
+                origin: "Glacial lakes on the eastern slopes of Mount Harmukh (District Bandipora)",
+                confluence: "Direct eastern inflow into Wular Lake near Erin village (Bandipora)",
+                districts: "Bandipora",
+                iwtStatus: "Western River Basin tributary.",
+                tributariesLeft: "Upper alpine snow-melt rivulets",
+                tributariesRight: "Madhumati inter-ridge drainage",
+                kasPoints: [
+                    "One of the two primary sediment and water feeder streams of Wular Lake from the north-east (alongside Madhumati River).",
+                    "Trout-bearing mountain stream critical to the lacustrine ecology of the Wular Ramsar wetland.",
+                    "Catchment includes the high-altitude alpine lake of Gangabal foot-slopes.",
+                    "Supplies irrigation to Bandipora's paddy fields and drinking water to the Bandipora municipal committee."
+                ],
+                geographyNote: "Steep boulder-strewn gradient terminating abruptly in the deltaic silt swamps of north-eastern Wular Lake."
+            },
+            {
+                id: "dal",
+                type: "lake",
+                category: "LAKES",
+                name: "Dal Lake",
+                vernacular: "Mahasarit (Nilamata Purana), 'Jewel in the Crown of Kashmir'",
+                coords: { lat: 34.11, lon: 74.87 },
+                elevation: "1,583 m (5,194 ft)",
+                length: "Area: Approx 18 to 21 sq km (contracted from 25+ sq km in 19th century)",
+                origin: "Post-glacial tectonic depression and fluvial oxbow formation fed by Telbal Nallah",
+                confluence: "Outflows via Dalgate / Amir Khan Nallah into Nigeen Lake, Anchar Lake and Jhelum",
+                districts: "Srinagar (encircled by Zabarwan Range)",
+                iwtStatus: "Inland wetland water body within Western River Basin.",
+                tributariesLeft: "Dachigam Nallah (via Telbal channel)",
+                tributariesRight: "Sub-lacustrine artesian springs along Zabarwan foot",
+                kasPoints: [
+                    "Divided into four primary basins: Gagribal, Lokut Dal, Bod Dal, and Nigeen (often treated as separate lake).",
+                    "Houses two historical islands: Ropa Lank (Silver Island, built by Sultan Hasan Shah) and Sona Lank (Gold Island, built by Mughal prince Murad Baksh, son of Shah Jahan) crowned with Char Chinar trees.",
+                    "Features unique floating vegetable gardens known as 'Radh' constructed from matted reeds and lake muck.",
+                    "Regulated by the Dal Lake Conservation and Management Authority (LCMA, formerly LAWDA).",
+                    "Circumscribed by Mughal Gardens: Shalimar Bagh (Jahangir, 1619), Nishat Bagh (Asif Khan, 1633), and Chashme Shahi (Shah Jahan, 1632)."
+                ],
+                geographyNote: "Maximum depth is approx 6 meters. Highly eutrophic; suffers from massive invasive weed infestation (Azolla and Ceratophyllum) and urban sewage discharge."
+            },
+            {
+                id: "wular",
+                type: "lake",
+                category: "LAKES",
+                name: "Wular Lake",
+                vernacular: "Mahapadmasar (Nilamata Purana / Rajatarangini), Ullola ('Turbulent waves')",
+                coords: { lat: 34.35, lon: 74.55 },
+                elevation: "1,580 m (5,184 ft)",
+                length: "Area: 130 to 189 sq km (varies heavily by season; largest freshwater lake in India)",
+                origin: "Tectonic activity accompanied by the deltaic ponding of the River Jhelum",
+                confluence: "Inflow: River Jhelum, Erin, Madhumati | Outflow: River Jhelum at Sopore",
+                districts: "Bandipora, Baramulla",
+                iwtStatus: "Western River flow system. Subject of the Tulbul Navigation Project (Wular Barrage) dispute with Pakistan.",
+                tributariesLeft: "River Jhelum (enters from south-east near Sumbal)",
+                tributariesRight: "Madhumati and Erin nallahs from Harmukh slopes",
+                kasPoints: [
+                    "Designated as a Wetland of International Importance under the Ramsar Convention in 1990.",
+                    "Artificial island 'Zaina Lank' built in 1443-44 CE by Sultan Zain-ul-Abidin ('Budshah') to provide shelter for boatmen caught in afternoon gales.",
+                    "Tulbul Navigation Project: Initiated in 1984 by India to ensure 4.5 ft navigation depth down to Baramulla in winter; objected to by Pakistan citing Article III of the Indus Waters Treaty 1960.",
+                    "Supplies approx 60% of Kashmir's total inland fish production (Schizothorax / Cyprinus carpio) and massive water chestnut (Trapa natans / Singhara) harvest."
+                ],
+                geographyNote: "Natural flood absorption reservoir for the entire Kashmir Valley. Severe siltation has drastically reduced its volumetric holding capacity since the 1950s."
+            },
+            {
+                id: "manasbal",
+                type: "lake",
+                category: "LAKES",
+                name: "Manasbal Lake",
+                vernacular: "Manasarovar derivative / 'Supreme Gem of Kashmiri Lakes'",
+                coords: { lat: 34.25, lon: 74.67 },
+                elevation: "1,583 m (5,194 ft)",
+                length: "Area: 2.81 sq km | Depth: Approx 13 m (43 ft) - Deepest valley lake in Kashmir",
+                origin: "Tectonic / Karstic solution depression fed predominantly by subterranean springs",
+                confluence: "Outflows into River Jhelum via a regulated canal at Sumbal",
+                districts: "Ganderbal (Safapora area)",
+                iwtStatus: "Inland lacustrine body, Western Basin.",
+                tributariesLeft: "Underground artesian springs (70% of inflow)",
+                tributariesRight: "Lar canal overflow (seasonal runoff)",
+                kasPoints: [
+                    "Holds the distinction of being the deepest freshwater lake in the Kashmir Valley (~13 m).",
+                    "Famous for massive growth of sacred lotus (Nelumbo nucifera) whose root 'Nadru' is harvested as a high-value culinary crop.",
+                    "Northern bank features the ruins of 'Darogabagh' (Jharokha Bagh), a Mughal pleasure terrace built by Empress Noor Jahan.",
+                    "Oligotrophic to mesotrophic aquatic status with the highest water clarity and transparency among urban Kashmiri valley lakes."
+                ],
+                geographyNote: "Extensive limestone extraction at nearby Ajas and Safapora has historically posed major siltation and dust deposition hazards."
+            },
+            {
+                id: "anchar",
+                type: "lake",
+                category: "LAKES",
+                name: "Anchar Lake",
+                vernacular: "Ancient oxbow wetland swamp",
+                coords: { lat: 34.15, lon: 74.77 },
+                elevation: "1,584 m",
+                length: "Area: Contracted to approx 5.5 sq km (originally over 18 sq km)",
+                origin: "Fluvial deltaic wetland fed by the Dachigam/Sindh flood spills and Amir Khan Nallah",
+                confluence: "Drains into the Jhelum near Sangam/Shadipora fringe",
+                districts: "Srinagar (Soura / Buchpora outskirts)",
+                iwtStatus: "Inland wetland within Jhelum basin.",
+                tributariesLeft: "Amir Khan Nallah (connection from Dal/Nigeen)",
+                tributariesRight: "Sindh River overflow channels",
+                kasPoints: [
+                    "Directly interconnected with Dal Lake via the Nallah Amir Khan conduit through Gilsar and Khushalsar.",
+                    "Critically degraded urban water body; heavily impacted by untreated biomedical and municipal waste from Sher-i-Kashmir Institute of Medical Sciences (SKIMS), Soura.",
+                    "Traditional center for reed-mat weaving and seasonal water-fowl poaching.",
+                    "High-yield subject in JKSSB environmental geography tests regarding disappearing urban wetlands of Srinagar."
+                ],
+                geographyNote: "Shows near-complete transformation into terrestrial marshland along its western edge due to illegal land reclamation and willow plantations."
+            },
+            {
+                id: "nigeen",
+                type: "lake",
+                category: "LAKES",
+                name: "Nigeen Lake",
+                vernacular: "Nagena ('The Jewel in the Ring')",
+                coords: { lat: 34.12, lon: 74.83 },
+                elevation: "1,583 m",
+                length: "Area: Approx 3.5 sq km | Depth: Up to 6 m",
+                origin: "Deep western basin of the greater Dal lacustrine complex",
+                confluence: "Interconnected with Dal via Ashai Bagh bridge conduit; drains into Khushalsar",
+                districts: "Srinagar (flanked by Hazratbal and Hari Parbat hill)",
+                iwtStatus: "Inland urban lake.",
+                tributariesLeft: "Dal Lake overflow",
+                tributariesRight: "Sub-surface springs along western bank",
+                kasPoints: [
+                    "Often described as a separate lake, but hydrologically an arm of the Dal Lake system connected through a narrow causeway.",
+                    "Deeper and has better water circulation than the main Dal, making it historically preferred for swimming and non-motorized water sports.",
+                    "Houses luxury houseboats and the historic Nigeen Club.",
+                    "Bounded on the east by the Hazratbal Shrine and on the south-west by the historic fort of Koh-e-Maran (Hari Parbat)."
+                ],
+                geographyNote: "Surrounded by majestic weeping willows (Salix babylonica) and poplars; water quality is closely tracked by the LCMA monitoring stations."
+            },
+            {
+                id: "pangong",
+                type: "lake",
+                category: "LAKES",
+                name: "Pangong Tso (Pangong Lake)",
+                vernacular: "Pangong Tso ('High Grassland Lake' in Tibetan)",
+                coords: { lat: 33.75, lon: 78.65 },
+                elevation: "4,350 m (14,270 ft)",
+                length: "134 km total length (approx 45 km in Ladakh, India; approx 60% in Tibet, China) | Area: 604 sq km",
+                origin: "Tectonic collision fault basin dammed by ancient glacial moraines",
+                confluence: "Endorheic basin (closed drainage system; no active surface outlet)",
+                districts: "Leh District (UT of Ladakh)",
+                iwtStatus: "Not part of the Indus Waters Treaty (falls within closed Tibet-Ladakh endorheic plateau).",
+                tributariesLeft: "Glacial rivulets from Pangong Range",
+                tributariesRight: "Snowmelt channels from Chang Chenmo ridges",
+                kasPoints: [
+                    "World's highest saltwater lake of its scale; water is saline/brackish yet it freezes completely in winter (-30°C).",
+                    "Does not support any fish or macroscopic aquatic vegetation; supports tiny crustaceans (copepods) and acts as an essential breeding haven for migratory birds like the Bar-headed Goose (Anser indicus) and Brahmini Duck.",
+                    "Crossed by the disputed Line of Actual Control (LAC); the 2020 Indo-China military standoff occurred along its northern mountain spurs ('Fingers 1 to 8').",
+                    "Famous for dramatic daytime optical color shifts ranging from turquoise green to cobalt blue."
+                ],
+                geographyNote: "Access from Leh is via Chang La Pass (5,360 m). The eastern end of the lake is completely fresh water in Tibet before accumulating salts toward the west."
+            },
+            {
+                id: "sheshnag",
+                type: "lake",
+                category: "LAKES",
+                name: "Sheshnag Lake",
+                vernacular: "Lake of the Primordial Cosmic Serpent",
+                coords: { lat: 34.09, lon: 75.52 },
+                elevation: "3,574 m (11,725 ft)",
+                length: "Length: Approx 1.1 km | Width: 0.7 km",
+                origin: "High-altitude glacial tarn dammed by terminal moraine",
+                confluence: "Outflows as the East Lidder River toward Chandanwari and Pahalgam",
+                districts: "Anantnag (Amarnath Yatra Pilgrimage Circuit)",
+                iwtStatus: "Headwaters of Western River tributary (Lidder/Jhelum).",
+                tributariesLeft: "Glacial melt from Koh-i-Noor mountain",
+                tributariesRight: "Snow runoff from Sheshnag peaks",
+                kasPoints: [
+                    "Vital second night-halt camp on the traditional Pahalgam-Amarnath Cave Yatra route.",
+                    "Surrounded by seven glaciated mountain pinnacles resembling the hoods of the mythical serpent Sheshnag.",
+                    "Oligotrophic alpine lake; remains completely frozen until late May/June.",
+                    "Originates the East Lidder River which joins West Lidder at Pahalgam."
+                ],
+                geographyNote: "Exhibits a bright greenish-turquoise color due to high concentrations of suspended glacial rock flour."
+            },
+            {
+                id: "gangabal",
+                type: "lake",
+                category: "LAKES",
+                name: "Gangabal Lake",
+                vernacular: "Harmukut Ganga (Sacred Ganga of Harmukh)",
+                coords: { lat: 34.43, lon: 74.92 },
+                elevation: "3,570 m (11,713 ft)",
+                length: "Length: Approx 2.5 km | Depth: Approx 50 m (deepest high-altitude alpine lake in valley)",
+                origin: "Glacial cirque tarn fed by the hanging glaciers of Mount Harmukh",
+                confluence: "Drains into Wangath Nallah, which discharges into Sindh River at Kangan",
+                districts: "Ganderbal",
+                iwtStatus: "Western River Basin tributary headwaters.",
+                tributariesLeft: "Harmukh north-eastern glacier melt",
+                tributariesRight: "Overflow channel from sister lake Nundkol",
+                kasPoints: [
+                    "Sacred to Kashmiri Pandits who perform the annual 'Harmukh Gangabal Yatra' (Ganga Ashtami) to immerse the ashes of deceased ancestors.",
+                    "Considered the Haridwar of Kashmir in ancient Shaivite and Nilamata tradition.",
+                    "Internationally celebrated for Brown Trout (Salmo trutta fario) introduced by the British in the early 1900s.",
+                    "Trekking trailhead starts from the ancient 8th-century stone temple ruins of Naranag."
+                ],
+                geographyNote: "Lies directly beneath the sheer 5,142 m north face of Mount Harmukh; feeds Wangath Nallah, a key water generator for Sindh River."
+            },
+            {
+                id: "nundkol",
+                type: "lake",
+                category: "LAKES",
+                name: "Nundkol Lake",
+                vernacular: "Nandi Kund (Sacred pool of Nandi, vehicle of Shiva)",
+                coords: { lat: 34.41, lon: 74.91 },
+                elevation: "3,505 m (11,499 ft)",
+                length: "Length: Approx 1.2 km",
+                origin: "Glacial cirque basin lying 1.5 km south of Gangabal",
+                confluence: "Feeds directly into Wangath Nallah along with Gangabal outflow",
+                districts: "Ganderbal",
+                iwtStatus: "Western River Basin.",
+                tributariesLeft: "Direct hanging ice-fall melt of Mount Harmukh",
+                tributariesRight: "Gangabal interconnecting brook",
+                kasPoints: [
+                    "Known as the 'Twin Lake of Gangabal', sitting directly under the dramatic Harmukh ice-fall.",
+                    "Dedicated in classical folklore to Nandi, the sacred bull of Lord Shiva.",
+                    "Major staging and wilderness campsite on the Sonamarg-Vishansar-Ganderbal Great Lakes Trek.",
+                    "Renowned angling spot for introduced Rainbow and Brown trout species."
+                ],
+                geographyNote: "The lake's western edge is framed by expansive boulder screes and alpine meadows dotted with blue gentians and primulas."
+            },
+            {
+                id: "krishansar",
+                type: "lake",
+                category: "LAKES",
+                name: "Krishansar Lake",
+                vernacular: "Lake of Lord Krishna",
+                coords: { lat: 34.39, lon: 75.07 },
+                elevation: "3,710 m (12,172 ft)",
+                length: "Length: Approx 1 km | Width: 0.6 km",
+                origin: "High-altitude alpine glacial meadow tarn",
+                confluence: "Outflow feeds into the Kishanganga (Neelum) River catchment",
+                districts: "Ganderbal (accessible via Nichinai Pass from Sonamarg)",
+                iwtStatus: "Kishanganga / Western River Basin.",
+                tributariesLeft: "Alpine snowpack runoff",
+                tributariesRight: "Overflow channel entering Vishansar Lake",
+                kasPoints: [
+                    "Key gem of the legendary 'Kashmir Great Lakes (KGL) Trek'.",
+                    "Separated from sister lake Vishansar by a narrow meadow ridge less than 1 km wide.",
+                    "Home to prolific Brown Trout populations; angling requires specialized permits from the J&K Fisheries Department.",
+                    "Remains completely snowbound and inaccessible for over nine months (October through June)."
+                ],
+                geographyNote: "Flanked by lush alpine carpets that erupt in July-August with Himalayan wildflowers, aconites, and forget-me-nots."
+            },
+            {
+                id: "vishansar",
+                type: "lake",
+                category: "LAKES",
+                name: "Vishansar Lake",
+                vernacular: "Lake of Lord Vishnu",
+                coords: { lat: 34.38, lon: 75.08 },
+                elevation: "3,710 m (12,172 ft)",
+                length: "Length: Approx 1 km",
+                origin: "High-altitude oligotrophic tarn fed by Kishansar overflow and glaciers",
+                confluence: "Drains north-west into the Kishanganga (Neelum) River",
+                districts: "Ganderbal",
+                iwtStatus: "Kishanganga Basin (Western River system).",
+                tributariesLeft: "Overflow from Krishansar Lake",
+                tributariesRight: "Nichinai glacial crest runoff",
+                kasPoints: [
+                    "Holds great mythological sanctity in Kashmir folklore alongside Krishansar.",
+                    "Primary source of high-altitude water fueling the northern tributaries of River Kishanganga.",
+                    "Features dramatic 1,000-meter vertical granite cliff backdrop.",
+                    "Key question on JKPSC exams regarding alpine lakes that drain into Kishanganga rather than the Kashmir Valley trunk Jhelum."
+                ],
+                geographyNote: "Exhibits intense oligotrophy with water temperatures rarely exceeding 8°C even in mid-summer."
+            },
+            {
+                id: "tarsar",
+                type: "lake",
+                category: "LAKES",
+                name: "Tarsar Lake",
+                vernacular: "Almond-shaped Alpine Lake",
+                coords: { lat: 34.14, lon: 75.14 },
+                elevation: "3,795 m (12,450 ft)",
+                length: "Length: 2.1 km | Distinctive almond geometry",
+                origin: "Alpine glacial lake carved out on the northern slopes of Kolahoi massif",
+                confluence: "Drains southward via the West Lidder River through Aru Valley",
+                districts: "Pulwama / Anantnag borderline",
+                iwtStatus: "Western River tributary headwaters (Lidder/Jhelum).",
+                tributariesLeft: "Kolahoi western ridge snowfields",
+                tributariesRight: "Sub-surface moraine springs",
+                kasPoints: [
+                    "Famous for its unmistakable almond shape and its dramatic turquoise to emerald color shifts based on sun angle.",
+                    "Forms the centerpiece of the popular 'Tarsar-Marsar Trek' originating from Aru (Pahalgam).",
+                    "Separated from sister lake Marsar by a massive 4,000-meter knife-edge mountain col.",
+                    "Its outflow forms the West Lidder, which unites with East Lidder at Pahalgam."
+                ],
+                geographyNote: "Bounded by sweeping meadows grazed in summer by transhumant Bakarwal shepherd tribes."
+            },
+            {
+                id: "marsar",
+                type: "lake",
+                category: "LAKES",
+                name: "Marsar Lake",
+                vernacular: "The Lake of Death / Lake of Spirits (Local folklore)",
+                coords: { lat: 34.15, lon: 75.12 },
+                elevation: "3,800 m (12,467 ft)",
+                length: "Length: Approx 1.5 km",
+                origin: "High-altitude glacial tarn",
+                confluence: "Drains westward into Dachigam Creek, supplying the Sarband reservoir at Harwan (Srinagar)",
+                districts: "Pulwama / Srinagar (Dachigam National Park headwaters)",
+                iwtStatus: "Western River Basin.",
+                tributariesLeft: "Alpine cirque snowfields",
+                tributariesRight: "Tarsar ridge overflow seepage",
+                kasPoints: [
+                    "Hydrologically unique: while Tarsar drains south into Lidder (Anantnag), sister lake Marsar drains west directly into Dachigam Creek, feeding Harwan reservoir and Dal Lake in Srinagar.",
+                    "Enclosed in the high-altitude core reserve of Dachigam National Park, representing primary summer habitat for the critically endangered Hangul.",
+                    "Reputed in local Kashmiri pastoral folklore to unleash sudden catastrophic cloudbursts and gales if disturbed.",
+                    "Frequent focal point in JKPSC exams evaluating hydrological divides in the Pir Panjal and Greater Himalayas."
+                ],
+                geographyNote: "Usually shrouded in thick afternoon fog and clouds due to moisture funneled up the Dachigam valley."
+            },
+            {
+                id: "konsarnag",
+                type: "lake",
+                category: "LAKES",
+                name: "Kousarnag Lake (Konsarnag)",
+                vernacular: "Kramasar (Nilamata Purana), 'Footprint of Vishnu'",
+                coords: { lat: 33.51, lon: 74.82 },
+                elevation: "3,960 m (12,992 ft)",
+                length: "Length: Approx 3 km | Width: 1 km",
+                origin: "Glacial tarn locked in a high amphitheater of the Pir Panjal Range",
+                confluence: "Source of the Vishav River, which cascades down to form Aharbal Falls",
+                districts: "Kulgam",
+                iwtStatus: "Western River Basin (Vishav/Jhelum headwaters).",
+                tributariesLeft: "Glacial ice sheets of Bramha Shakli peaks",
+                tributariesRight: "Pir Panjal crest snowfields",
+                kasPoints: [
+                    "According to Hindu legend in the Nilamata Purana, Lord Vishnu stepped here in the form of a fish (Matsya avatar) during the great deluge, leaving his sacred footprint.",
+                    "Source of the River Vishav, making it the supreme water fountain of southern Kashmir.",
+                    "Traditional staging route for the historic Konsarnag Yatra originating from Chawalgam / Aharbal.",
+                    "Icebergs float on its azure surface well into the months of July and August."
+                ],
+                geographyNote: "Surrounded by three 4,500 m peaks known as the Brahma Shakli peaks; one of the largest high-altitude lakes in the Pir Panjal range."
+            },
+            {
+                id: "tsomoriri",
+                type: "lake",
+                category: "LAKES",
+                name: "Tso Moriri (Mountain Lake)",
+                vernacular: "Tso Moriri Wetland Conservation Reserve",
+                coords: { lat: 32.90, lon: 78.31 },
+                elevation: "4,522 m (14,836 ft)",
+                length: "Length: 29 km | Width: Up to 8 km | Area: Approx 120 sq km",
+                origin: "Tectonic endorheic lake in the Changthang plateau",
+                confluence: "Endorheic basin (landlocked; internal evaporation)",
+                districts: "Leh District (UT of Ladakh, Changthang region)",
+                iwtStatus: "Endorheic Plateau (Outside IWT Indus Main allocation).",
+                tributariesLeft: "Pharse Phun stream",
+                tributariesRight: "Glacial melt streams from Chamser & Lungser Kangri (6,600 m)",
+                kasPoints: [
+                    "Designated as a Ramsar Wetland of International Importance in November 2002 (the only high-altitude trans-Himalayan Ramsar site in Ladakh).",
+                    "Crucial breeding site for the highly endangered Black-necked Crane (Grus nigricollis) and Bar-headed Goose (Anser indicus).",
+                    "Inhabited along its western shore by the historic Korzok Monastery (400-year-old Drukpa Buddhist lineage) and semi-nomadic Changpa pastoralists who rear Pashmina (Changthangi) goats.",
+                    "Oligotrophic to slightly saline water; completely frozen during the bitter Himalayan winter."
+                ],
+                geographyNote: "Surrounded by 6,000-meter peaks (Mentok Kangri, Lungser Kangri); strictly regulated eco-sensitive zone."
+            },
+            {
+                id: "uri1",
+                type: "dam",
+                category: "DAMS",
+                name: "Uri-I Hydroelectric Project",
+                vernacular: "Uri Stage-I Run-of-the-River Scheme",
+                coords: { lat: 34.14, lon: 74.05 },
+                elevation: "Powerhouse: Underground near Uri gorge",
+                length: "Installed Capacity: 480 MW (4 x 120 MW Francis Turbines)",
+                origin: "River Jhelum in Baramulla District (close to Line of Control)",
+                confluence: "Tailrace discharges directly back into River Jhelum upstream of Uri-II intake",
+                districts: "Baramulla",
+                iwtStatus: "Compliant with Indus Waters Treaty 1960 run-of-the-river design parameters (no live storage diversion).",
+                tributariesLeft: "Direct Jhelum main stem flow",
+                tributariesRight: "Catchment runoff downstream of Baramulla gorge",
+                kasPoints: [
+                    "Executing Agency: National Hydroelectric Power Corporation (NHPC Limited); commissioned in 1997.",
+                    "Features an entirely subterranean powerhouse and a massive headrace tunnel (approx 10.6 km long) built with Swedish consortium collaboration (Uri Civil Contractors).",
+                    "Generates over 2,000 Million Units (MU) of electricity annually, stabilizing the northern grid.",
+                    "Subject of intense strategic security; situated less than 15 km from the Line of Control."
+                ],
+                geographyNote: "Harnesses the tremendous drop of the Jhelum as it carves through the narrow mountain gorge separating Baramulla from PoK."
+            },
+            {
+                id: "uri2",
+                type: "dam",
+                category: "DAMS",
+                name: "Uri-II Hydroelectric Project",
+                vernacular: "Uri Stage-II Cascade Scheme",
+                coords: { lat: 34.12, lon: 73.98 },
+                elevation: "Run-of-the-river cascade level",
+                length: "Installed Capacity: 240 MW (4 x 60 MW Francis Turbines)",
+                origin: "River Jhelum downstream of Uri-I tailrace",
+                confluence: "Discharges back into River Jhelum right before it enters PoK/Muzaffarabad",
+                districts: "Baramulla (Uri Tehsil)",
+                iwtStatus: "Western River Run-of-the-River project under IWT 1960 provisions.",
+                tributariesLeft: "Tailrace discharge of Uri-I",
+                tributariesRight: "Localized cross-border nallah runoff",
+                kasPoints: [
+                    "Developed and operated by NHPC; commissioned in 2014 by Prime Minister Narendra Modi.",
+                    "Acts as a cascade project utilizing the tailrace waters exiting from Uri-I, maximizing the hydro potential of the Jhelum.",
+                    "Concrete gravity dam height: 52 meters, with a 4.2 km headrace tunnel.",
+                    "Generates roughly 1,124 Million Units (MU) per year; J&K receives 12% free power royalty plus 1% for local area development."
+                ],
+                geographyNote: "The final major Indian hydroelectric station on the River Jhelum before the river crosses the Line of Control."
+            },
+            {
+                id: "lowerjhelum",
+                type: "dam",
+                category: "DAMS",
+                name: "Lower Jhelum Hydroelectric Project (LJHP)",
+                vernacular: "Gantamulla Power Station",
+                coords: { lat: 34.18, lon: 74.22 },
+                elevation: "Barrage at Gantamulla",
+                length: "Installed Capacity: 105 MW (3 x 35 MW)",
+                origin: "River Jhelum at Gantamulla, Baramulla",
+                confluence: "Discharges into Jhelum above Uri gorge",
+                districts: "Baramulla",
+                iwtStatus: "State-owned run-of-the-river project under Indus Waters Treaty provisions.",
+                tributariesLeft: "Pohru-Jhelum combined flow",
+                tributariesRight: "Baramulla urban runoff",
+                kasPoints: [
+                    "Owned and operated by the Jammu & Kashmir State Power Development Corporation (JKSPDC).",
+                    "Commissioned between 1978 and 1979; one of the oldest state-sector commercial mega-projects in J&K.",
+                    "Features a headrace canal (flume) of approx 9 km length rather than an underground deep rock tunnel.",
+                    "A classic textbook study in JKPSC exams contrasting state-owned (JKSPDC) assets versus central-owned (NHPC) infrastructure."
+                ],
+                geographyNote: "Located along the ancient Silk Road axis where the open alluvial valley of Kashmir abruptly terminates into the V-shaped Baramulla gorge."
+            },
+            {
+                id: "kishanganga",
+                type: "dam",
+                category: "DAMS",
+                name: "Kishanganga Hydroelectric Project",
+                vernacular: "Gurez-Bandipora Inter-Basin Tunnel Diversion",
+                coords: { lat: 34.65, lon: 74.75 },
+                elevation: "Dam: Gurez (approx 2,400 m) | Powerhouse: Bandipora (approx 1,600 m)",
+                length: "Installed Capacity: 330 MW (3 x 110 MW Pelton Turbines)",
+                origin: "River Kishanganga (known as Neelum in Pakistan) in Gurez Valley (Bandipora District)",
+                confluence: "Diverted through a 23.2 km tunnel beneath Mount Harmukh into Wular Lake / River Jhelum",
+                districts: "Bandipora",
+                iwtStatus: "Central focus of an epic international arbitration at the Permanent Court of Arbitration (PCA) at The Hague.",
+                tributariesLeft: "Burzil Nallah, Tilel streams",
+                tributariesRight: "Gurez valley snow-melt",
+                kasPoints: [
+                    "Executing Agency: NHPC; fully commissioned in May 2018.",
+                    "Inter-basin transfer: Diverts water from Kishanganga river in Gurez valley through a 23.25 km headrace tunnel into the Bonar Nallah / Wular Lake in the Jhelum basin.",
+                    "PCA Hague Verdict (2013): Court ruled in India's favor, recognizing India's right under IWT to divert water for run-of-the-river power generation, provided a minimum environmental flow of 9 cumecs is released downstream.",
+                    "Concrete Face Rockfill Dam (CFRD) of 37 m height located at Gurez; critical for supplying cheap, clean power to the northern grid."
+                ],
+                geographyNote: "Technological marvel involving tunneling through fractured Himalayan strata underneath high-altitude glaciers."
+            },
+            {
+                id: "pakaldul",
+                type: "dam",
+                category: "DAMS",
+                name: "Pakal Dul Hydroelectric Project",
+                vernacular: "Marusudar Mega Storage/Peaking Project",
+                coords: { lat: 33.52, lon: 75.81 },
+                elevation: "Drangdhuran site, Kishtwar",
+                length: "Installed Capacity: 1,000 MW (4 x 250 MW)",
+                origin: "River Marusudar (largest right-bank tributary of River Chenab) in Kishtwar",
+                confluence: "Discharges back into Marusudar upstream of its confluence with Chenab at Bhandarkoot",
+                districts: "Kishtwar (Jammu Division)",
+                iwtStatus: "Western River under IWT; design compliant with allowed run-of-the-river pondage parameters.",
+                tributariesLeft: "Kishtwar mountain runoff",
+                tributariesRight: "Warwan and Marwah river combined flow",
+                kasPoints: [
+                    "Executing Agency: Chenab Valley Power Projects Limited (CVPPL) - a joint venture of NHPC, JKSPDC, and PTC India.",
+                    "Features J&K's first massive 167-meter-tall Concrete-Face Rockfill Dam (CFRD).",
+                    "Largest single hydroelectric power project currently under active construction in Jammu & Kashmir.",
+                    "Includes an underground powerhouse located at village Dul and a 10 km long headrace tunnel."
+                ],
+                geographyNote: "Harnesses the roaring Marusudar River, which drains the Warwan Valley and possesses a steeper descent than the main Chenab."
+            },
+            {
+                id: "ratle",
+                type: "dam",
+                category: "DAMS",
+                name: "Ratle Hydroelectric Project",
+                vernacular: "Drabshalla Chenab Project",
+                coords: { lat: 33.18, lon: 75.79 },
+                elevation: "Drabshalla, Kishtwar",
+                length: "Installed Capacity: 850 MW (4 x 205 MW + 1 x 30 MW auxiliary)",
+                origin: "River Chenab near Drabshalla (District Kishtwar)",
+                confluence: "River Chenab main stem",
+                districts: "Kishtwar (Jammu Division)",
+                iwtStatus: "Pakistan protested the free-fall spillways citing IWT storage restrictions; World Bank appointed a Neutral Expert / Court of Arbitration.",
+                tributariesLeft: "Marusudar-Chenab combined flow",
+                tributariesRight: "Bhadarwah/Doda drainage",
+                kasPoints: [
+                    "Joint Venture execution via Ratle Hydroelectric Power Corporation Limited (NHPC 51% and JKSPDC 49%).",
+                    "Concrete gravity dam height: 133 meters.",
+                    "India's Union Cabinet approved revival of construction with an investment of ₹5,281.94 crore in January 2021.",
+                    "Pivotal question on both UPSC Civil Services and JKPSC exams regarding World Bank intervention under the Indus Waters Treaty."
+                ],
+                geographyNote: "Positioned in the deep Chenab rock canyon between Kishtwar and Doda."
+            },
+            {
+                id: "kiru",
+                type: "dam",
+                category: "DAMS",
+                name: "Kiru Hydroelectric Project",
+                vernacular: "Kiru Run-of-River Dam",
+                coords: { lat: 33.35, lon: 76.15 },
+                elevation: "Pathernakki near Kiru",
+                length: "Installed Capacity: 624 MW (4 x 156 MW)",
+                origin: "River Chenab in Kishtwar District",
+                confluence: "Feeds downstream into Kwar and Ratle cascade",
+                districts: "Kishtwar (Jammu Division)",
+                iwtStatus: "Western River Basin; run-of-the-river.",
+                tributariesLeft: "High alpine glacial runoff from Padder",
+                tributariesRight: "Chenab trunk flow from Himachal border",
+                kasPoints: [
+                    "Developed by Chenab Valley Power Projects Limited (CVPPL).",
+                    "Concrete gravity dam of 135 m height with four underground penstocks.",
+                    "Part of the massive Chenab Hydro Power Cascade (Dulhasti -> Kiru -> Kwar -> Pakal Dul -> Ratle -> Baglihar -> Salal).",
+                    "Crucial power generator targeted to bridge the heavy winter power deficit across the UT of J&K."
+                ],
+                geographyNote: "Surrounded by vertical quartz-mica schist cliffs characteristic of the High Himalayan crystalline core."
+            },
+            {
+                id: "baglihar",
+                type: "dam",
+                category: "DAMS",
+                name: "Baglihar Hydroelectric Project",
+                vernacular: "Chanderkote Dam",
+                coords: { lat: 33.15, lon: 75.32 },
+                elevation: "Chanderkote gorge, Ramban",
+                length: "Installed Capacity: 900 MW (Stage-I: 450 MW, Stage-II: 450 MW)",
+                origin: "River Chenab at Chanderkote (District Ramban)",
+                confluence: "Chenab main stem flowing toward Reasi and Salal",
+                districts: "Ramban (Jammu Division)",
+                iwtStatus: "Subject of landmark World Bank Neutral Expert adjudication (Prof. Raymond Lafitte, 2005-2007).",
+                tributariesLeft: "Banihal/Bichleri stream",
+                tributariesRight: "Gool-Gulabgarh nallahs",
+                kasPoints: [
+                    "Flagship project of the Jammu & Kashmir State Power Development Corporation (JKSPDC). Stage-I commissioned 2008, Stage-II commissioned 2015-16.",
+                    "Concrete gravity dam 143 m tall, creating a dramatic emerald-green canyon reservoir flanking the Jammu-Srinagar Highway (NH-44).",
+                    "World Bank Adjudication: Pakistan contested the spillway gates, pondage, and freeboard. Neutral Expert Raymond Lafitte upheld India's design with minor 1.5 m reduction in dam crest height and approved bottom sluice spillways for sediment evacuation.",
+                    "Represents the proudest indigenous engineering achievement in JKSPDC's operational portfolio."
+                ],
+                geographyNote: "Situated in an active seismic and landslide-prone tectonic zone (Main Boundary Thrust zone)."
+            },
+            {
+                id: "dulhasti",
+                type: "dam",
+                category: "DAMS",
+                name: "Dulhasti Hydroelectric Project",
+                vernacular: "Kishtwar Dul-Hasti Scheme",
+                coords: { lat: 33.37, lon: 75.77 },
+                elevation: "Dam at Dul, Powerhouse at Hasti",
+                length: "Installed Capacity: 390 MW (3 x 130 MW Francis Turbines)",
+                origin: "River Chenab in Kishtwar District",
+                confluence: "Discharges back into Chenab main stem at Hasti",
+                districts: "Kishtwar (Jammu Division)",
+                iwtStatus: "Western River run-of-the-river project under IWT.",
+                tributariesLeft: "Padder sapphire belt streams",
+                tributariesRight: "Marusudar River confluence at Bhandarkoot",
+                kasPoints: [
+                    "Executing Agency: NHPC; fully commissioned in 2007 after overcoming extreme geological challenges.",
+                    "Concrete gravity dam 65 m high at Dul village, diverted through a 10.6 km headrace tunnel to an underground powerhouse at Hasti.",
+                    "Construction involved pioneering use of Tunnel Boring Machines (TBM) which became trapped due to severe squeezing ground in fractured Himalayan gneiss.",
+                    "Generates roughly 1,900 Million Units (MU) of base-load peaking power."
+                ],
+                geographyNote: "Located directly in the cultural transition zone between Kashmiri-speaking Kishtwari and Dogri cultural spheres."
+            },
+            {
+                id: "salal",
+                type: "dam",
+                category: "DAMS",
+                name: "Salal Hydroelectric Project",
+                vernacular: "Dhyangarh Rockfill & Concrete Gravity Dam",
+                coords: { lat: 33.14, lon: 74.83 },
+                elevation: "Dhyangarh near Reasi",
+                length: "Installed Capacity: 690 MW (Stage-I: 345 MW, Stage-II: 345 MW)",
+                origin: "River Chenab near Reasi (Shiwalik foot-slopes)",
+                confluence: "Chenab trunk flow entering Akhnoor and the plains of Pakistan Punjab",
+                districts: "Reasi (Jammu Division)",
+                iwtStatus: "Indo-Pak bilateral agreement signed in 1978 settling design specifications under Indus Waters Treaty.",
+                tributariesLeft: "Ans River",
+                tributariesRight: "Tawi headwater runoff (adjacent)",
+                kasPoints: [
+                    "NHPC's foundational mega-project; Stage-I commissioned 1987, Stage-II commissioned 1993-95.",
+                    "First major hydroelectric project constructed by the Government of India on the River Chenab.",
+                    "Composed of a massive composite structure: a 113 m high concrete gravity dam alongside a 630 m long rockfill dam at Dhyangarh ridge.",
+                    "Historic Indo-Pak Salal Agreement (1978): India conceded to Pakistan's demand to eliminate operating sluice gates, which unfortunately led to heavy silt sedimentation in the reservoir."
+                ],
+                geographyNote: "Located just upstream of the world's highest railway arch bridge (Chenab Bridge at Kauri/Bakkal, 359 m above riverbed)."
+            },
+            {
+                id: "nimoobazgo",
+                type: "dam",
+                category: "DAMS",
+                name: "Nimoo Bazgo Hydroelectric Project",
+                vernacular: "Alchi High-Altitude Dam",
+                coords: { lat: 34.22, lon: 77.18 },
+                elevation: "3,100 m (10,170 ft)",
+                length: "Installed Capacity: 45 MW (3 x 15 MW)",
+                origin: "River Indus (Sindhu) at village Alchi / Nimoo (Leh District)",
+                confluence: "River Indus main stem toward Khalatse, Kargil and Baltistan",
+                districts: "Leh District (UT of Ladakh)",
+                iwtStatus: "Built on River Indus (Western River under IWT); strictly designed as run-of-the-river.",
+                tributariesLeft: "Zanskar River (confluence at Nimoo, just upstream)",
+                tributariesRight: "Basgo dry mountain rivulets",
+                kasPoints: [
+                    "Constructed by NHPC; fully commissioned in 2013.",
+                    "First major central-sector concrete gravity hydroelectric dam erected directly on the trunk stream of the mighty River Indus in India.",
+                    "Operates in sub-zero winter temperatures (-30°C) with specialized freeze-resistant concrete and submerged intake designs.",
+                    "Supplied the first reliable commercial electric grid to the trans-Himalayan military and civilian population of Leh, drastically cutting diesel reliance."
+                ],
+                geographyNote: "Situated downstream of the iconic confluence of the Indus and the muddy Zanskar River at Nimoo."
+            }
+        ];
+
+        let currentIndex = 0;
+        let map;
+        let currentLayer;
+
+        function initCatalog() {
+            renderSidebar();
+            initMap();
+            displayItem(0);
+            setupKeyboardListeners();
+        }
+
+        function initMap() {
+            map = L.map('map', {
+                zoomControl: true,
+                attributionControl: false
+            });
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 18
+            }).addTo(map);
+            L.control.attribution({position: 'bottomright', prefix: false}).addAttribution('&copy; OpenStreetMap').addTo(map);
+        }
+
+        function renderSidebar() {
+            const container = document.getElementById("sidebar-list");
+            container.innerHTML = "";
+            const categories = ["RIVERS", "LAKES", "DAMS"];
+            
+            categories.forEach(cat => {
+                const groupDiv = document.createElement("div");
+                groupDiv.className = "folder-group";
+
+                const header = document.createElement("div");
+                header.className = "folder-header";
+                const catCount = WATER_DATABASE.filter(item => item.category === cat).length;
+                header.innerHTML = `<span>&#9660; [FOLDER] ${cat} (${catCount})</span><span>[+]</span>`;
+                header.onclick = function() {
+                    const ul = this.nextElementSibling;
+                    if(ul.style.display === "none") {
+                        ul.style.display = "block";
+                        this.querySelector("span:first-child").innerHTML = `&#9660; [FOLDER] ${cat} (${catCount})`;
+                    } else {
+                        ul.style.display = "none";
+                        this.querySelector("span:first-child").innerHTML = `&#9654; [FOLDER] ${cat} (${catCount})`;
+                    }
+                };
+
+                const list = document.createElement("ul");
+                list.className = "folder-list";
+
+                WATER_DATABASE.forEach((item, index) => {
+                    if (item.category === cat) {
+                        const li = document.createElement("li");
+                        li.className = "tree-node";
+                        li.id = `node-${index}`;
+                        
+                        let badgeClass = item.type === "river" ? "badge-river" : (item.type === "lake" ? "badge-lake" : "badge-dam");
+                        li.innerHTML = `<span class="badge ${badgeClass}">${item.type.toUpperCase().substring(0,3)}</span> ${item.name}`;
+                        
+                        li.onclick = () => displayItem(index);
+                        list.appendChild(li);
+                    }
+                });
+
+                groupDiv.appendChild(header);
+                groupDiv.appendChild(list);
+                container.appendChild(groupDiv);
+            });
+        }
+
+        function displayItem(index) {
+            if (index < 0) index = WATER_DATABASE.length - 1;
+            if (index >= WATER_DATABASE.length) index = 0;
+            currentIndex = index;
+
+            const item = WATER_DATABASE[currentIndex];
+
+            document.querySelectorAll(".tree-node").forEach(node => node.classList.remove("active"));
+            const activeNode = document.getElementById(`node-${currentIndex}`);
+            if (activeNode) {
+                activeNode.classList.add("active");
+                activeNode.scrollIntoView({ block: "nearest", behavior: "smooth" });
+            }
+
+            document.getElementById("index-counter").innerText = `[${currentIndex + 1}/${WATER_DATABASE.length}]`;
+            document.getElementById("active-entity-title").innerText = `${item.category} :: ${item.name.toUpperCase()}`;
+            document.getElementById("active-entity-coords").innerText = `PINPOINT: LAT ${item.coords.lat.toFixed(2)}°N | LON ${item.coords.lon.toFixed(2)}°E`;
+            document.getElementById("quick-status-msg").innerText = `DISPLAYING: ${item.name}`;
+
+            if (currentLayer) {
+                map.removeLayer(currentLayer);
+            }
+
+            if (item.type === 'river' && item.path) {
+                currentLayer = L.polyline(item.path, {
+                    color: '#000080',
+                    weight: 5,
+                    opacity: 0.8
+                }).addTo(map);
+                map.fitBounds(currentLayer.getBounds(), {padding: [30, 30]});
+            } else if (item.type === 'lake') {
+                currentLayer = L.circle(item.coords, {
+                    color: '#0d3b2e',
+                    fillColor: '#bfe5d9',
+                    fillOpacity: 0.5,
+                    radius: 3000
+                }).addTo(map);
+                map.setView(item.coords, 12);
+            } else if (item.type === 'dam') {
+                currentLayer = L.marker(item.coords).addTo(map);
+                map.setView(item.coords, 14);
+            }
+
+            setTimeout(() => {
+                map.invalidateSize();
+            }, 100);
+
+            const contentBox = document.getElementById("content-display");
+            
+            let html = `
+                <table class="retro-tbl">
+                    <tr>
+                        <th style="width: 25%;">PHYSICAL PARAMETER</th>
+                        <th>DOCUMENTED SPECIFICATION (JK RECONNAISSANCE)</th>
+                    </tr>
+                    <tr>
+                        <td><strong>CLASSIFICATION</strong></td>
+                        <td><span class="badge ${item.type==='river'?'badge-river':(item.type==='lake'?'badge-lake':'badge-dam')}">${item.category}</span> ${item.name}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>LOCATION &amp; DISTRICT</strong></td>
+                        <td>${item.districts} (UT of ${item.coords.lon > 76.5 && item.coords.lat < 35.0 ? 'Ladakh' : 'Jammu & Kashmir'})</td>
+                    </tr>
+                    <tr>
+                        <td><strong>HEADWATERS / ORIGIN</strong></td>
+                        <td>${item.origin}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>CONFLUENCE / DISCHARGE</strong></td>
+                        <td>${item.confluence}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>ALTITUDE / DIMENSIONS</strong></td>
+                        <td>${item.elevation} | ${item.length}</td>
+                    </tr>
+                    ${item.tributariesLeft ? `
+                    <tr>
+                        <td><strong>DRAINAGE / FEEDERS (L)</strong></td>
+                        <td>${item.tributariesLeft}</td>
+                    </tr>` : ''}
+                    ${item.tributariesRight ? `
+                    <tr>
+                        <td><strong>DRAINAGE / FEEDERS (R)</strong></td>
+                        <td>${item.tributariesRight}</td>
+                    </tr>` : ''}
+                </table>
+
+                <div class="exam-memo-box">
+                    <div style="font-weight: bold; margin-bottom: 6px; font-size: 12px; color: #664d00;">
+                        HIGH-YIELD EXAMINATION TOPIC SHEET (OBJECTIVE &amp; MAINS SYLLABUS):
+                    </div>
+                    <ul class="exam-points">
+                        ${item.kasPoints.map(pt => `<li>${pt}</li>`).join("")}
+                    </ul>
+                </div>
+
+                <div class="iwt-memo-box">
+                    <div style="font-weight: bold; margin-bottom: 4px; font-size: 11px;">TREATY / DISPUTE / STATUTORY REGIME:</div>
+                    <p style="font-size: 12px; line-height: 1.4;">${item.iwtStatus}</p>
+                </div>
+
+                <div class="sub-header">FIELD GEOLOGICAL &amp; ENVIRONMENTAL TRAITS</div>
+                <p style="margin-bottom: 12px; line-height: 1.5; font-size: 12px;">${item.geographyNote}</p>
+            `;
+
+            contentBox.innerHTML = html;
+            contentBox.scrollTop = 0;
+        }
+
+        function stepItem(offset) {
+            displayItem(currentIndex + offset);
+        }
+
+        function setupKeyboardListeners() {
+            window.addEventListener("keydown", function(e) {
+                if (e.ctrlKey && e.key === "ArrowRight") {
+                    e.preventDefault();
+                    stepItem(1);
+                }
+                else if (e.ctrlKey && e.key === "ArrowLeft") {
+                    e.preventDefault();
+                    stepItem(-1);
+                }
+            });
+        }
+
+        window.addEventListener("DOMContentLoaded", initCatalog);
+    </script>
+</body>
+</html>
